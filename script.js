@@ -3,10 +3,10 @@ let characteristic;
 
 document.getElementById('connect').addEventListener('click', async () => {
     try {
+        // Specifically request Classic Bluetooth
         device = await navigator.bluetooth.requestDevice({
-            // Accept all devices but filter by name in the picker
-            acceptAllDevices: true,
-            optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+            // Use acceptAllDevices to see all available devices including BT Classic
+            acceptAllDevices: true
         });
         
         log('Device selected: ' + device.name);
@@ -14,22 +14,27 @@ document.getElementById('connect').addEventListener('click', async () => {
         const server = await device.gatt.connect();
         log('Connected to GATT server');
         
-        // Let's log all available services
+        // Log all services to see what's available
         const services = await server.getPrimaryServices();
-        log('Available services: ' + services.length);
+        log('Found ' + services.length + ' services');
+        
+        // Try to find the Serial Port Service
         for (const service of services) {
-            log('Service: ' + service.uuid);
-            const characteristics = await service.getCharacteristics();
-            for (const char of characteristics) {
-                log('Characteristic: ' + char.uuid);
+            log('Service found: ' + service.uuid);
+            try {
+                const characteristics = await service.getCharacteristics();
+                for (const char of characteristics) {
+                    log('Characteristic: ' + char.uuid);
+                    characteristic = char; // Store the first writable characteristic
+                }
+            } catch (e) {
+                log('Error getting characteristics: ' + e);
             }
         }
         
-        // Then try to connect to our service
-        const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
-        characteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
-        
-        log('Connected successfully');
+        if (characteristic) {
+            log('Connected successfully!');
+        }
 
     } catch (error) {
         log('Error: ' + error);
