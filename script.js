@@ -308,7 +308,14 @@ def main():
                 time.sleep(0.1)
 
     else:  # Advanced Analytics mode
+# [Previous code remains the same until the Advanced Analytics mode]
+
+    else:  # Advanced Analytics mode
         st.write("### 🔬 Advanced Analytics Dashboard")
+        
+        # Initialize these variables at the start of the Advanced Analytics section
+        tunneling_prob = pd.Series()
+        no_tunneling_prob = pd.Series()
         
         # Simulation parameters
         st.sidebar.subheader("Simulation Parameters")
@@ -328,22 +335,26 @@ def main():
                 'tunneling': tunneling
             })
             
+            # Update these variables after creating the DataFrame
+            tunneling_prob = analysis_df[analysis_df['tunneling']]['probability']
+            no_tunneling_prob = analysis_df[~analysis_df['tunneling']]['probability']
+            
             # Advanced visualizations
             col1, col2 = st.columns(2)
             
             with col1:
                 # Probability density estimation
-                tunneling_prob = analysis_df[analysis_df['tunneling']]['probability']
-                no_tunneling_prob = analysis_df[~analysis_df['tunneling']]['probability']
-                
                 if len(tunneling_prob) > 0 and len(no_tunneling_prob) > 0:
-                    fig_kde = ff.create_distplot(
-                        [tunneling_prob, no_tunneling_prob],
-                        ['Tunneling', 'No Tunneling'],
-                        bin_size=0.02
-                    )
-                    fig_kde.update_layout(title="Probability Density Estimation")
-                    st.plotly_chart(fig_kde)
+                    try:
+                        fig_kde = ff.create_distplot(
+                            [tunneling_prob.tolist(), no_tunneling_prob.tolist()],
+                            ['Tunneling', 'No Tunneling'],
+                            bin_size=0.02
+                        )
+                        fig_kde.update_layout(title="Probability Density Estimation")
+                        st.plotly_chart(fig_kde)
+                    except Exception as e:
+                        st.write("Error creating density plot:", str(e))
                 else:
                     st.write("Insufficient data for density estimation")
             
@@ -362,20 +373,27 @@ def main():
             st.subheader("📊 Statistical Tests")
             
             if len(tunneling_prob) > 0 and len(no_tunneling_prob) > 0:
-                ks_stat, ks_pval = stats.ks_2samp(tunneling_prob, no_tunneling_prob)
-                st.write(f"Kolmogorov-Smirnov Test:")
-                st.write(f"- Statistic: {ks_stat:.4f}")
-                st.write(f"- p-value: {ks_pval:.4f}")
+                try:
+                    ks_stat, ks_pval = stats.ks_2samp(tunneling_prob, no_tunneling_prob)
+                    st.write(f"Kolmogorov-Smirnov Test:")
+                    st.write(f"- Statistic: {ks_stat:.4f}")
+                    st.write(f"- p-value: {ks_pval:.4f}")
+                except Exception as e:
+                    st.write("Error performing KS test:", str(e))
             else:
                 st.write("Insufficient data for Kolmogorov-Smirnov Test")
-                    if len(analysis_df['probability']) > 1:  # Need at least 2 points for confidence interval
-                ci = stats.t.interval(
-                    0.95,
-                    len(analysis_df['probability'])-1,
-                    loc=analysis_df['probability'].mean(),
-                    scale=stats.sem(analysis_df['probability'])
-                )
-                st.write(f"95% Confidence Interval for Probability: [{ci[0]:.4f}, {ci[1]:.4f}]")
+            
+            if len(analysis_df['probability']) > 1:
+                try:
+                    ci = stats.t.interval(
+                        0.95,
+                        len(analysis_df['probability'])-1,
+                        loc=analysis_df['probability'].mean(),
+                        scale=stats.sem(analysis_df['probability'])
+                    )
+                    st.write(f"95% Confidence Interval for Probability: [{ci[0]:.4f}, {ci[1]:.4f}]")
+                except Exception as e:
+                    st.write("Error calculating confidence interval:", str(e))
             else:
                 st.write("Insufficient data for confidence interval calculation")
 
