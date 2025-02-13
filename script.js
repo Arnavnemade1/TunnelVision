@@ -11,7 +11,7 @@ import math
 import random
 import time
 from io import StringIO
-from scipy import stats
+from scipy import stats  # Ensure this import is present
 
 class QuantumTunnelingPredictor:
     def __init__(self):
@@ -82,7 +82,7 @@ def create_heatmap(df):
             y=np.arange(10),
             colorscale='Viridis',
             colorbar=dict(title='Probability')
-        )
+        ))
     except Exception as e:
         st.error(f"Error creating heatmap: {str(e)}")
         return None
@@ -210,6 +210,10 @@ def main():
             # Split data
             tunneling_probs = df[df['tunneling']]['probability'].values
             no_tunneling_probs = df[~df['tunneling']]['probability'].values
+            
+            # Debugging: Check the data
+            st.write("Tunneling probabilities sample:", tunneling_probs[:5])
+            st.write("No tunneling probabilities sample:", no_tunneling_probs[:5])
             
             # Create visualizations
             col1, col2 = st.columns(2)
